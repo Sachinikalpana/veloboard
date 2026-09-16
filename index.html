@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeloBoard - Task Management</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Auth Screen overlay -->
+  <div id="auth-screen" class="auth-overlay">
+    <div class="auth-card">
+      <h2>Welcome to VeloBoard</h2>
+      <p class="subtitle">Sign in or create an account to manage tasks</p>
+      <form id="auth-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="auth-email" required placeholder="alex@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="auth-password" required placeholder="••••••••">
+        </div>
+        <div class="auth-actions">
+          <button type="button" id="login-btn" class="btn btn-primary">Log In</button>
+          <button type="button" id="signup-btn" class="btn btn-secondary">Sign Up</button>
+        </div>
+        <p id="auth-error" class="error-text"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Container -->
+  <div id="app-container" class="dashboard-container" style="display:none;">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <span class="logo-icon">❖</span>
+          <h2>VeloBoard</h2>
+        </div>
+        <nav class="nav-menu">
+          <button class="nav-btn active" data-view="tasks-view">☑ Tasks</button>
+          <button class="nav-btn" data-view="reports-view">📊 Analytics</button>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-profile-sm">
+          <div class="avatar" id="user-avatar">U</div>
+          <div class="user-info">
+            <span class="user-name" id="user-email-display">User</span>
+            <button id="logout-btn" class="logout-link">Log out</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1 id="page-title">Task Board</h1>
+          <p class="subtitle" id="page-subtitle">Manage and track your project workflow</p>
+        </div>
+        <div class="header-actions">
+          <input type="text" id="search-input" class="search-box" placeholder="🔍 Search tasks...">
+          <select id="project-selector" class="dropdown"></select>
+          <button id="delete-project-btn" class="btn btn-secondary" style="color: #f87171; border-color: rgba(248, 113, 113, 0.3);" title="Delete current project">🗑️</button>
+          <button id="open-task-modal-btn" class="btn btn-primary">+ Add Task</button>
+        </div>
+      </header>
+
+      <!-- TASKS VIEW -->
+      <section id="tasks-view" class="view-section active">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon blue">📋</div>
+            <div>
+              <span class="metric-label">Total Tasks</span>
+              <h2 id="metric-total">0</h2>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon yellow">⚡</div>
+            <div>
+              <span class="metric-label">In Progress</span>
+              <h2 id="metric-progress">0</h2>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon green">✓</div>
+            <div>
+              <span class="metric-label">Completed</span>
+              <h2 id="metric-completed">0</h2>
+            </div>
+          </div>
+          <div class="metric-card chart-metric">
+            <div class="donut-wrapper"><canvas id="miniDonutChart"></canvas></div>
+            <div class="donut-legend">
+              <div><span class="dot green"></span> Done</div>
+              <div><span class="dot yellow"></span> Progress</div>
+              <div><span class="dot blue"></span> To Do</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          <div class="left-panel">
+            <div class="panel-card">
+              <div class="panel-header">
+                <h3>My Tasks (Kanban)</h3>
+                <select id="filter-priority" class="dropdown-sm" style="width: auto;">
+                  <option value="ALL">All Priorities</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div class="kanban-board">
+                <div class="kanban-column" data-status="To Do">
+                  <div class="column-header header-todo">
+                    <span>To Do</span><span class="badge" id="todo-count">0</span>
+                  </div>
+                  <div class="task-list" id="todo-list"></div>
+                </div>
+                <div class="kanban-column" data-status="In Progress">
+                  <div class="column-header header-progress">
+                    <span>In Progress</span><span class="badge" id="progress-count">0</span>
+                  </div>
+                  <div class="task-list" id="in-progress-list"></div>
+                </div>
+                <div class="kanban-column" data-status="In Review">
+                  <div class="column-header header-review">
+                    <span>In Review</span><span class="badge" id="review-count">0</span>
+                  </div>
+                  <div class="task-list" id="in-review-list"></div>
+                </div>
+                <div class="kanban-column" data-status="Done">
+                  <div class="column-header header-done">
+                    <span>Done</span><span class="badge" id="done-count">0</span>
+                  </div>
+                  <div class="task-list" id="done-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div class="panel-card">
+              <h3>Priority Overview</h3>
+              <div class="priority-cards">
+                <div class="p-box high"><span class="p-title">High</span><h2 id="high-count">0</h2></div>
+                <div class="p-box medium"><span class="p-title">Medium</span><h2 id="medium-count">0</h2></div>
+                <div class="p-box low"><span class="p-title">Low</span><h2 id="low-count">0</h2></div>
+              </div>
+            </div>
+
+            <div class="panel-card mt-20">
+              <h3>Create Project</h3>
+              <form id="create-project-form" class="stack-form">
+                <input type="text" id="project-name-input" placeholder="Project name..." required>
+                <button type="submit" class="btn btn-secondary full-width">+ Create Project</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS VIEW -->
+      <section id="reports-view" class="view-section" style="display:none;">
+        <div class="workspace-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="panel-card">
+            <h3>Status Distribution</h3>
+            <div style="height: 260px; position: relative;">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3>Priority Distribution</h3>
+            <div style="height: 260px; position: relative;">
+              <canvas id="priorityChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3>Create New Task</h3>
+      <form id="modal-task-form">
+        <div class="form-group">
+          <label>Task Title</label>
+          <input type="text" id="task-title-input" required>
+        </div>
+        <div class="form-group">
+          <label>Category Tag</label>
+          <input type="text" id="task-tag-input" placeholder="Design">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="task-priority-input" class="dropdown">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" id="task-date-input">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary full-width">Add Task</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
